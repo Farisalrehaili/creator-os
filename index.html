@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creator OS — نظام تشغيل صناع المحتوى</title>
+<style>
+  :root{
+    --bg:#191919; --bg2:#202020; --panel:#252525; --panel2:#2d2d2d;
+    --line:#373737; --txt:#e9e9e7; --txt2:#9b9b9b; --txt3:#6f6f6f;
+    --accent:#2383e2; --accent2:#1a6fc4;
+    --green:#4dab6d; --yellow:#dfab01; --red:#e16259; --purple:#9a6dd7;
+    --orange:#d9730d; --pink:#cc6695; --teal:#0f9b8e;
+    --radius:10px; --sb:280px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Tahoma,"Noto Sans Arabic",Arial,sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.5;overflow:hidden}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  .app{display:flex;height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{width:var(--sb);background:var(--bg2);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow-y:auto}
+  .ws{padding:14px 14px 6px;display:flex;align-items:center;gap:10px}
+  .ws .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#2383e2,#9a6dd7);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff}
+  .ws h1{font-size:14px;font-weight:700}
+  .ws p{font-size:11px;color:var(--txt3)}
+  .nav{padding:8px}
+  .nav .lbl{font-size:11px;color:var(--txt3);padding:10px 10px 4px;font-weight:600;letter-spacing:.3px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;
+    color:var(--txt2);text-decoration:none;font-size:14px;cursor:pointer;transition:.12s;margin-bottom:1px}
+  .nav a:hover{background:var(--panel)}
+  .nav a.active{background:var(--panel2);color:var(--txt)}
+  .nav a .ic{width:20px;text-align:center;font-size:15px}
+  .nav a .badge{margin-inline-start:auto;font-size:10px;background:var(--line);color:var(--txt2);
+    padding:1px 7px;border-radius:10px}
+  .sb-foot{margin-top:auto;padding:12px;border-top:1px solid var(--line);font-size:11px;color:var(--txt3)}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  .topbar{height:44px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+    gap:8px;padding:0 18px;font-size:13px;color:var(--txt2);flex-shrink:0}
+  .topbar .crumb{color:var(--txt)}
+  .content{flex:1;overflow-y:auto;padding:0}
+  .page{display:none;padding:30px 44px 80px;max-width:1100px;margin:0 auto}
+  .page.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .page-head{margin-bottom:22px}
+  .page-emoji{font-size:42px;line-height:1;margin-bottom:10px}
+  .page-head h2{font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .page-head .sub{color:var(--txt2);font-size:14px;margin-top:6px;max-width:680px}
+
+  .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;
+    padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{background:var(--accent2)}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:var(--panel2);color:var(--txt)}
+  .btn.ghost:hover{background:var(--line)}
+  .btn .sp{display:inline-block;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hint{font-size:12px;color:var(--txt3)}
+
+  /* tables */
+  .tbl{width:100%;border-collapse:collapse;font-size:13px;background:var(--bg)}
+  .tbl th{text-align:start;font-weight:600;color:var(--txt2);font-size:12px;padding:8px 12px;
+    border-bottom:1px solid var(--line);white-space:nowrap}
+  .tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl tr:hover td{background:var(--bg2)}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .p-green{background:rgba(77,171,109,.15);color:#6fd998}
+  .p-yellow{background:rgba(223,171,1,.15);color:#e9c84a}
+  .p-red{background:rgba(225,98,89,.15);color:#f08e86}
+  .p-blue{background:rgba(35,131,226,.15);color:#5fa8f0}
+  .p-purple{background:rgba(154,109,215,.15);color:#b89af0}
+  .p-gray{background:var(--panel2);color:var(--txt2)}
+  .p-orange{background:rgba(217,115,13,.15);color:#e89a4d}
+  .score{font-weight:700}
+  .num{font-variant-numeric:tabular-nums;font-weight:600}
+
+  /* cards / kpi */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .kpi .k-lbl{font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:6px}
+  .kpi .k-val{font-size:26px;font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums}
+  .kpi .k-sub{font-size:11px;margin-top:4px}
+  .up{color:var(--green)} .down{color:var(--red)}
+
+  /* kanban */
+  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;overflow-x:auto}
+  .col{background:var(--bg2);border-radius:var(--radius);padding:10px;min-height:340px}
+  .col-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--txt2);
+    margin-bottom:10px;padding:0 2px}
+  .col-h .dot{width:8px;height:8px;border-radius:50%}
+  .col-h .cnt{margin-inline-start:auto;color:var(--txt3);font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px;
+    margin-bottom:8px;cursor:grab;transition:.12s;font-size:13px}
+  .card:hover{border-color:#4a4a4a;transform:translateY(-1px)}
+  .card.dragging{opacity:.4}
+  .card h4{font-size:13px;font-weight:600;margin-bottom:7px}
+  .card .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .card .av{width:20px;height:20px;border-radius:50%;font-size:10px;display:flex;align-items:center;
+    justify-content:center;font-weight:700;color:#fff;margin-inline-start:auto}
+  .col.over{outline:2px dashed var(--accent);outline-offset:-3px}
+
+  /* script engine */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel h3{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .panel .desc{font-size:12px;color:var(--txt2);margin-bottom:14px}
+  .hook{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:11px 13px;
+    margin-bottom:9px;cursor:pointer;transition:.12s;position:relative}
+  .hook:hover{border-color:var(--accent)}
+  .hook .tag{font-size:10px;color:var(--accent);font-weight:700;display:block;margin-bottom:3px}
+  .hook .txt{font-size:13px}
+  .hook .copy{position:absolute;inset-inline-start:10px;top:10px;font-size:10px;color:var(--txt3);opacity:0}
+  .hook:hover .copy{opacity:1}
+  .steps{counter-reset:s}
+  .step{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border:none}
+  .step .n{counter-increment:s;width:26px;height:26px;border-radius:50%;background:var(--panel2);
+    color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;
+    font-size:12px;flex-shrink:0}
+  .step .n::before{content:counter(s)}
+  .step .b h5{font-size:13px;font-weight:700}
+  .step .b p{font-size:12px;color:var(--txt2);margin-top:2px}
+  .timebar{font-size:10px;color:var(--txt3);margin-top:3px}
+
+  /* finance bars */
+  .barRow{display:flex;align-items:center;gap:12px;margin-bottom:11px;font-size:13px}
+  .barRow .nm{width:130px;color:var(--txt2)}
+  .barWrap{flex:1;height:24px;background:var(--bg2);border-radius:6px;overflow:hidden}
+  .bar{height:100%;border-radius:6px;display:flex;align-items:center;padding-inline-start:9px;
+    font-size:11px;font-weight:700;color:#fff;transition:width 1s ease}
+  .barRow .vl{width:90px;text-align:start;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* team */
+  .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .member{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .member .top{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .member .av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-weight:800;color:#fff;font-size:16px}
+  .member .nm{font-size:14px;font-weight:700}
+  .member .ro{font-size:11px;color:var(--txt2)}
+  .perm{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .perm:last-child{border:none}
+  .sw{width:34px;height:19px;border-radius:12px;background:var(--line);position:relative;transition:.2s}
+  .sw.on{background:var(--green)}
+  .sw::after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;
+    top:2px;inset-inline-end:2px;transition:.2s}
+  .sw.on::after{inset-inline-end:17px}
+
+  .callout{background:var(--panel);border:1px solid var(--line);border-inline-start:3px solid var(--accent);
+    border-radius:8px;padding:13px 16px;font-size:13px;color:var(--txt2);margin:18px 0;display:flex;gap:10px}
+  .callout .em{font-size:18px}
+  .sec-title{font-size:13px;font-weight:700;color:var(--txt2);margin:26px 0 12px;
+    display:flex;align-items:center;gap:8px}
+  .tableWrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;overflow-x:auto}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);
+    background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:11px 20px;
+    border-radius:8px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;transition:.3s;z-index:99}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .formula{font-family:"SF Mono",Menlo,monospace;font-size:11px;background:var(--bg);color:#8fc8ff;
+    padding:2px 6px;border-radius:4px;display:inline-block}
+  @media(max-width:900px){.kpis,.team-grid{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.board{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="ws">
+      <div class="logo">C</div>
+      <div>
+        <h1>Creator OS</h1>
+        <p>نظام تشغيل صناع المحتوى</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="lbl">المساحة</div>
+      <a data-p="dash" class="active"><span class="ic">🏠</span> الرئيسية</a>
+      <a data-p="brain"><span class="ic">🧠</span> مخزن الأفكار الذكي<span class="badge" id="bdg-brain">8</span></a>
+      <a data-p="script"><span class="ic">✍️</span> محرّك كتابة السيناريو</a>
+      <a data-p="pipe"><span class="ic">🎬</span> خط الإنتاج<span class="badge" id="bdg-pipe">11</span></a>
+      <a data-p="crm"><span class="ic">💼</span> الرعايات والمالية</a>
+      <a data-p="team"><span class="ic">👥</span> لوحة الفريق</a>
+      <div class="lbl">أدوات</div>
+      <a data-p="auto"><span class="ic">⚡</span> الأتمتة (Make)</a>
+    </nav>
+    <div class="sb-foot">
+      نموذج أولي تفاعلي · v1.0<br>الحقوق الفكرية محفوظة ©
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <span>Creator OS</span><span>/</span><span class="crumb" id="crumb">الرئيسية</span>
+    </div>
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="page active" id="p-dash">
+        <div class="page-head">
+          <div class="page-emoji">🏠</div>
+          <h2>مرحباً بك في نظام التشغيل</h2>
+          <p class="sub">لوحة قيادة موحّدة تربط الأفكار بالإنتاج بالمال بالفريق — كل المؤشرات تُحسب تلقائياً عبر معادلات Formulas 2.0 و Rollups.</p>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k-lbl">💡 أفكار جاهزة للتصوير</div><div class="k-val">8</div><div class="k-sub up">▲ 3 هذا الأسبوع</div></div>
+          <div class="kpi"><div class="k-lbl">🎬 قيد الإنتاج الآن</div><div class="k-val">11</div><div class="k-sub down">▲ 2 متأخرة عن الموعد</div></div>
+          <div class="kpi"><div class="k-lbl">💰 صافي الربح (الشهر)</div><div class="k-val">39,950</div><div class="k-sub up">▲ %18 عن الشهر السابق</div></div>
+          <div class="kpi"><div class="k-lbl">🤝 عقود رعاية نشطة</div><div class="k-val">4</div><div class="k-sub">2 بانتظار الدفع</div></div>
+        </div>
+        <div class="callout"><span class="em">⚡</span><div><b>التنبيهات الآلية:</b> فيديو «أسرار خوارزمية يوتيوب» تجاوز موعد المونتاج بيومين — تم إخطار المونتير تلقائياً. فاتورة رعاية شركة «تك‑فلو» مستحقة خلال 3 أيام.</div></div>
+        <div class="sec-title">⏱️ النشر القادم (Timeline)</div>
+        <div class="tableWrap">
+          <table class="tbl">
+            <thead><tr><th>الفيديو</th><th>المنصة</th><th>المرحلة</th><th>تاريخ النشر</th><th>المسؤول</th><th>جاهزية</th></tr></thead>
+            <tbody>
+              <tr><td>5 أدوات AI تختصر وقتك</td><td>يوتيوب</td><td><span class="pill p-yellow">مونتاج</span></td><td>30 يونيو</td><td>سارة</td><td><span class="num">85%</span></td></tr>
+              <tr><td>روتين صباحي للمبدعين</td><td>إنستغرام</td><td><span class="pill p-blue">جدولة</span></td><td>1 يوليو</td><td>أنت</td><td><span class="num">100%</span></td></tr>
+              <tr><td>مراجعة كاميرا 2026</td><td>يوتيوب</td><td><span class="pill p-orange">تصوير</span></td><td>4 يوليو</td><td>أنت</td><td><span class="num">40%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== AI BRAIN ===== -->
+      <section class="page" id="p-brain">
+        <div class="page-head">
+          <div class="page-emoji">🧠</div>
+          <h2>مخزن الأفكار الذكي</h2>
+          <p class="sub">جدول تفاعلي لتوليد وتخزين الأفكار. كل فكرة تُقيّم تلقائياً بـ«درجة الانتشار» المحسوبة من توقّع المشاهدات × سهولة التنفيذ. زر التوليد مهيّأ للربط مع OpenAI API عبر Make.</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="genBtn"><span id="genIc">✨</span> توليد فكرة بالذكاء الاصطناعي</button>
+          <button class="btn ghost" onclick="addManual()">+ فكرة يدوية</button>
+          <span class="hint">المعادلة: <span class="formula">درجة الانتشار = round((المشاهدات/1000)*0.6 + سهولة*8)</span></span>
+        </div>
+        <div class="tableWrap">
+          <table class="tbl">
+            <thead><tr><th>💡 الفكرة</th><th>المنصة</th><th>الزاوية النفسية</th><th>توقّع المشاهدات</th><th>السهولة</th><th>درجة الانتشار</th><th>الحالة</th></tr></thead>
+            <tbody id="brainBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== SCRIPT ENGINE ===== -->
+      <section class="page" id="p-script">
+        <div class="page-head">
+          <div class="page-emoji">✍️</div>
+          <h2>محرّك كتابة السيناريو السيكولوجي</h2>
+          <p class="sub">قوالب خطّافات (Hooks) مبنية على صيغ عالمية مجرّبة لجذب المشاهد في أول 3 ثوانٍ، وهيكل فيديو يحافظ على نسبة المشاهدة حتى النهاية.</p>
+        </div>
+        <div class="grid2">
+          <div class="panel">
+            <h3>🪝 مكتبة الخطّافات (أول 3 ثوانٍ)</h3>
+            <p class="desc">اضغط أي خطّاف لنسخه — استبدل ما بين الأقواس بموضوعك.</p>
+            <div class="hook" onclick="copyHook(this)"><span class="copy">📋 نسخ</span><span class="tag">الفضول المعلّق</span><span class="txt">«لا أحد يخبرك بهذا عن [الموضوع]... لكني سأفعل.»</span></div>
+            <div class="hook" onclick="copyHook(this)"><span class="copy">📋 نسخ</span><span class="tag">الخطأ الشائع</span><span class="txt">«%90 يفعلون [س] بشكل خاطئ — وأنت غالباً منهم.»</span></div>
+            <div class="hook" onclick="copyHook(this)"><span class="copy">📋 نسخ</span><span class="tag">النتيجة الصادمة</span><span class="txt">«جرّبت [س] لمدة 30 يوماً، وهذا ما حدث فعلاً.»</span></div>
+            <div class="hook" onclick="copyHook(this)"><span class="copy">📋 نسخ</span><span class="tag">السؤال المباشر</span><span class="txt">«ماذا لو أخبرتك أن [س] لا يحتاج سوى 5 دقائق؟»</span></div>
+            <div class="hook" onclick="copyHook(this)"><span class="copy">📋 نسخ</span><span class="tag">كسر الاعتقاد</span><span class="txt">«انسَ كل ما تعرفه عن [الموضوع]. القاعدة تغيّرت.»</span></div>
+          </div>
+          <div class="panel">
+            <h3>🎞️ هيكل الفيديو الفائز</h3>
+            <p class="desc">بنية مرتّبة تحافظ على نسبة الاحتفاظ (Retention).</p>
+            <div class="steps">
+              <div class="step"><div class="n"></div><div class="b"><h5>الخطّاف</h5><p>صدمة بصرية/سؤال يفتح حلقة فضول.<div class="timebar">0–3 ثوانٍ</div></p></div></div>
+              <div class="step"><div class="n"></div><div class="b"><h5>الوعد</h5><p>ماذا سيكسب المشاهد لو بقي؟<div class="timebar">3–10 ثوانٍ</div></p></div></div>
+              <div class="step"><div class="n"></div><div class="b"><h5>المحتوى</h5><p>3 نقاط، كل نقطة بإعادة فتح حلقة جديدة.<div class="timebar">10ث – 80%</div></p></div></div>
+              <div class="step"><div class="n"></div><div class="b"><h5>الذروة</h5><p>أقوى معلومة/نتيجة احتُفظ بها للنهاية.<div class="timebar">80–92%</div></p></div></div>
+              <div class="step"><div class="n"></div><div class="b"><h5>الدعوة للفعل</h5><p>خطوة واحدة واضحة (متابعة/تعليق).<div class="timebar">آخر 8%</div></p></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PIPELINE ===== -->
+      <section class="page" id="p-pipe">
+        <div class="page-head">
+          <div class="page-emoji">🎬</div>
+          <h2>خط الإنتاج (Content Pipeline)</h2>
+          <p class="sub">لوحة Kanban تتبع كل فيديو عبر مراحله. اسحب البطاقة بين الأعمدة لتحديث الحالة — في Notion الحقيقي يُطلق هذا أتمتة تُرسل تنبيهاً للمسؤول وتحدّث تاريخ النشر.</p>
+        </div>
+        <div class="hint" style="margin-bottom:12px">💡 اسحب أي بطاقة بين الأعمدة لتجربة تغيير المرحلة.</div>
+        <div class="board" id="board"></div>
+      </section>
+
+      <!-- ===== CRM & FINANCE ===== -->
+      <section class="page" id="p-crm">
+        <div class="page-head">
+          <div class="page-emoji">💼</div>
+          <h2>إدارة الرعايات والمالية</h2>
+          <p class="sub">تتبّع العقود والفواتير وإيرادات المنصات، مع حساب صافي الربح تلقائياً. كل القيم أدناه تُجمع عبر Rollups من جداول مرتبطة.</p>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k-lbl">📈 إجمالي الإيرادات</div><div class="k-val" id="f-rev">0</div><div class="k-sub">رعايات + منصات</div></div>
+          <div class="kpi"><div class="k-lbl">📉 المصروفات</div><div class="k-val" id="f-exp">0</div><div class="k-sub">معدّات + فريق</div></div>
+          <div class="kpi"><div class="k-lbl">💵 صافي الربح</div><div class="k-val up" id="f-net">0</div><div class="k-sub">الإيرادات − المصروفات</div></div>
+          <div class="kpi"><div class="k-lbl">⏳ مستحقات معلّقة</div><div class="k-val" id="f-due">0</div><div class="k-sub">فواتير لم تُحصّل</div></div>
+        </div>
+        <div class="callout"><span class="em">🧮</span><div><b>معادلة صافي الربح (Formulas 2.0):</b> <span class="formula">net = sum(prop("الرعايات")) + sum(prop("المنصات")) − sum(prop("المصروفات"))</span></div></div>
+        <div class="sec-title">🤝 عقود الرعايات</div>
+        <div class="tableWrap">
+          <table class="tbl">
+            <thead><tr><th>الشركة</th><th>قيمة العقد</th><th>تاريخ التسليم</th><th>حالة الدفع</th><th>الفيديو المرتبط</th></tr></thead>
+            <tbody>
+              <tr><td>Tech‑Flow</td><td class="num">12,000 ر.س</td><td>2 يوليو</td><td><span class="pill p-yellow">بانتظار الدفع</span></td><td>5 أدوات AI</td></tr>
+              <tr><td>NovaGear</td><td class="num">8,500 ر.س</td><td>10 يوليو</td><td><span class="pill p-green">مدفوع</span></td><td>مراجعة كاميرا</td></tr>
+              <tr><td>FitDaily</td><td class="num">6,000 ر.س</td><td>15 يوليو</td><td><span class="pill p-yellow">بانتظار الدفع</span></td><td>روتين صباحي</td></tr>
+              <tr><td>CloudBox</td><td class="num">9,500 ر.س</td><td>20 يوليو</td><td><span class="pill p-green">مدفوع</span></td><td>تخزين سحابي</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="sec-title">💹 مصادر الإيرادات</div>
+        <div class="panel">
+          <div class="barRow"><span class="nm">رعايات الشركات</span><div class="barWrap"><div class="bar" style="background:var(--purple);width:0" data-w="78">36,000</div></div><span class="vl">36,000</span></div>
+          <div class="barRow"><span class="nm">إعلانات يوتيوب</span><div class="barWrap"><div class="bar" style="background:var(--red);width:0" data-w="40">9,200</div></div><span class="vl">9,200</span></div>
+          <div class="barRow"><span class="nm">منتجات رقمية</span><div class="barWrap"><div class="bar" style="background:var(--green);width:0" data-w="28">6,400</div></div><span class="vl">6,400</span></div>
+          <div class="barRow"><span class="nm">المصروفات</span><div class="barWrap"><div class="bar" style="background:var(--orange);width:0" data-w="50">−11,650</div></div><span class="vl">11,650</span></div>
+        </div>
+      </section>
+
+      <!-- ===== TEAM ===== -->
+      <section class="page" id="p-team">
+        <div class="page-head">
+          <div class="page-emoji">👥</div>
+          <h2>لوحة تحكم الفريق</h2>
+          <p class="sub">شارك المهام مع المصمم والمونتير الخارجي وحدّد صلاحيات كل عضو. الصلاحيات هنا تفاعلية — جرّب تبديلها.</p>
+        </div>
+        <div class="team-grid">
+          <div class="member">
+            <div class="top"><div class="av" style="background:var(--purple)">س</div><div><div class="nm">سارة — مونتيرة</div><div class="ro">خارجي · 3 مهام نشطة</div></div></div>
+            <div class="perm"><span>عرض خط الإنتاج</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>تعديل حالة المونتاج</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>رؤية المالية</span><div class="sw" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="member">
+            <div class="top"><div class="av" style="background:var(--teal)">م</div><div><div class="nm">مازن — مصمم</div><div class="ro">خارجي · 2 مهمة نشطة</div></div></div>
+            <div class="perm"><span>عرض الأفكار</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>رفع التصاميم</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>رؤية المالية</span><div class="sw" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="member">
+            <div class="top"><div class="av" style="background:var(--accent)">ك</div><div><div class="nm">كاتب السكربت</div><div class="ro">خارجي · 1 مهمة نشطة</div></div></div>
+            <div class="perm"><span>محرّك السيناريو</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>عرض الأفكار</span><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="perm"><span>تعديل خط الإنتاج</span><div class="sw" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+        <div class="sec-title">📋 المهام المسندة للفريق</div>
+        <div class="tableWrap">
+          <table class="tbl">
+            <thead><tr><th>المهمة</th><th>المسؤول</th><th>الأولوية</th><th>الموعد</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>مونتاج «5 أدوات AI»</td><td>سارة</td><td><span class="pill p-red">عالية</span></td><td>30 يونيو</td><td><span class="pill p-yellow">جارٍ</span></td></tr>
+              <tr><td>تصميم ثَمبنيل «مراجعة كاميرا»</td><td>مازن</td><td><span class="pill p-yellow">متوسطة</span></td><td>3 يوليو</td><td><span class="pill p-gray">لم يبدأ</span></td></tr>
+              <tr><td>سكربت «روتين صباحي»</td><td>كاتب السكربت</td><td><span class="pill p-green">منخفضة</span></td><td>5 يوليو</td><td><span class="pill p-green">مكتمل</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== AUTOMATION ===== -->
+      <section class="page" id="p-auto">
+        <div class="page-head">
+          <div class="page-emoji">⚡</div>
+          <h2>طبقة الأتمتة (Make / OpenAI)</h2>
+          <p class="sub">السيناريوهات الجاهزة للربط التي تجعل النظام «مؤتمتاً بصفر أخطاء».</p>
+        </div>
+        <div class="grid2">
+          <div class="panel"><h3>✨ توليد الأفكار</h3><p class="desc">Make → OpenAI API → Notion</p>
+            <div class="step"><div class="n"></div><div class="b"><h5>المُشغّل</h5><p>الضغط على زر «توليد» في مخزن الأفكار.</p></div></div>
+            <div class="step"><div class="n"></div><div class="b"><h5>المعالجة</h5><p>إرسال الـPrompt (المجال + النبرة) إلى OpenAI.</p></div></div>
+            <div class="step"><div class="n"></div><div class="b"><h5>الإخراج</h5><p>إنشاء صف جديد بالفكرة + الزاوية النفسية تلقائياً.</p></div></div>
+          </div>
+          <div class="panel"><h3>🔔 تنبيهات خط الإنتاج</h3><p class="desc">Notion → Make → WhatsApp/Email</p>
+            <div class="step"><div class="n"></div><div class="b"><h5>المُشغّل</h5><p>تغيّر حالة فيديو أو اقتراب موعد النشر.</p></div></div>
+            <div class="step"><div class="n"></div><div class="b"><h5>الشرط</h5><p>إذا تأخّرت المرحلة عن الموعد المحدد.</p></div></div>
+            <div class="step"><div class="n"></div><div class="b"><h5>الإجراء</h5><p>إرسال تذكير تلقائي للمسؤول عن المرحلة.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Navigation ---------- */
+const navs=document.querySelectorAll('.nav a');
+const crumb=document.getElementById('crumb');
+const names={dash:'الرئيسية',brain:'مخزن الأفكار الذكي',script:'محرّك كتابة السيناريو',pipe:'خط الإنتاج',crm:'الرعايات والمالية',team:'لوحة الفريق',auto:'الأتمتة'};
+navs.forEach(a=>a.onclick=()=>{
+  navs.forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  const p=a.dataset.p;
+  document.querySelectorAll('.page').forEach(s=>s.classList.remove('active'));
+  document.getElementById('p-'+p).classList.add('active');
+  crumb.textContent=names[p];
+  if(p==='crm')animateBars();
+});
+
+/* ---------- Toast ---------- */
+const toast=document.getElementById('toast');let tT;
+function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>toast.classList.remove('show'),2200);}
+
+/* ---------- AI Brain ---------- */
+const ideaSeed=[
+  ["لماذا تفشل %90 من القنوات في أول سنة","يوتيوب","الخوف من الفقد","يوتيوب"],
+  ["روتين الإنتاجية الذي غيّر حياتي","إنستغرام","الإلهام",""],
+  ["اختبرت 5 أدوات AI مجانية","تيك توك","الفضول",""],
+  ["الخطأ الذي يرتكبه كل مبتدئ في المونتاج","يوتيوب","الخطأ الشائع",""],
+  ["كيف تكتب خطّافاً يوقف التمرير","تيك توك","النتيجة السريعة",""]
+];
+const angles=["الفضول","الخوف من الفقد","الخطأ الشائع","النتيجة الصادمة","كسر الاعتقاد","الإلهام"];
+const platforms=["يوتيوب","تيك توك","إنستغرام"];
+let brain=[
+  ["أسرار خوارزمية يوتيوب 2026","يوتيوب","كسر الاعتقاد",240000,0.6],
+  ["5 أدوات AI تختصر وقتك","تيك توك","النتيجة السريعة",180000,0.8],
+  ["روتين صباحي للمبدعين","إنستغرام","الإلهام",95000,0.9],
+  ["لماذا تفشل القنوات الجديدة","يوتيوب","الخوف من الفقد",310000,0.5],
+  ["مراجعة كاميرا 2026","يوتيوب","الفضول",120000,0.4],
+  ["كيف تكتب خطّافاً ناجحاً","تيك توك","الخطأ الشائع",150000,0.7],
+  ["تخزين سحابي لصناع المحتوى","يوتيوب","النتيجة الصادمة",60000,0.6],
+  ["3 أخطاء في الإضاءة","إنستغرام","الخطأ الشائع",75000,0.85]
+];
+function score(v,e){return Math.round((v/1000)*0.6+e*8);}
+function statusOf(s){return s>=130?['p-green','🔥 أولوية']:s>=90?['p-blue','جاهزة']:['p-gray','مخزّنة'];}
+function renderBrain(){
+  const b=document.getElementById('brainBody');b.innerHTML='';
+  brain.sort((a,c)=>score(c[3],c[4])-score(a[3],a[4]));
+  brain.forEach(r=>{
+    const s=score(r[3],r[4]);const[cl,lb]=statusOf(s);
+    b.insertAdjacentHTML('beforeend',
+     `<tr><td><b>${r[0]}</b></td><td><span class="pill p-gray">${r[1]}</span></td>
+      <td><span class="pill p-purple">${r[2]}</span></td>
+      <td class="num">${r[3].toLocaleString()}</td>
+      <td class="num">${(r[4]*100)|0}%</td>
+      <td class="score" style="color:${s>=130?'#6fd998':s>=90?'#5fa8f0':'#9b9b9b'}">${s}</td>
+      <td><span class="pill ${cl}">${lb}</span></td></tr>`);
+  });
+  document.getElementById('bdg-brain').textContent=brain.filter(r=>score(r[3],r[4])>=90).length;
+}
+const genBtn=document.getElementById('genBtn'),genIc=document.getElementById('genIc');
+genBtn.onclick=()=>{
+  genIc.outerHTML='<span class="sp" id="genIc">⏳</span>';
+  genBtn.disabled=true;
+  showToast('⚡ يتصل بـ OpenAI عبر Make...');
+  setTimeout(()=>{
+    const s=ideaSeed[Math.floor(Math.random()*ideaSeed.length)];
+    brain.push([s[0],s[1]||platforms[Math.random()*3|0],s[2]||angles[Math.random()*angles.length|0],
+      40000+Math.floor(Math.random()*260000),Math.round((0.4+Math.random()*0.5)*10)/10]);
+    renderBrain();
+    document.querySelector('#genBtn').innerHTML='<span id="genIc">✨</span> توليد فكرة بالذكاء الاصطناعي';
+    genBtn.disabled=false;
+    showToast('✅ تم توليد فكرة جديدة وتقييمها تلقائياً');
+  },1400);
+};
+function addManual(){
+  brain.push(["فكرة جديدة (اضغط للتعديل)",platforms[0],angles[0],50000,0.6]);
+  renderBrain();showToast('➕ أُضيف صف جديد');
+}
+
+/* ---------- Pipeline / Kanban ---------- */
+const stages=[["فكرة","var(--purple)"],["كتابة","var(--accent)"],["تصوير","var(--orange)"],["مونتاج","var(--yellow)"],["جدولة","var(--teal)"],["نشر","var(--green)"]];
+let cards=[
+  ["مراجعة كاميرا 2026",2,"أ"],["أسرار الخوارزمية",3,"س"],["روتين صباحي",4,"أ"],
+  ["5 أدوات AI",3,"س"],["تخزين سحابي",1,"ك"],["أخطاء الإضاءة",0,"م"],
+  ["خطّاف ناجح",0,"ك"],["لماذا تفشل القنوات",1,"أ"],["مراجعة ميكروفون",2,"أ"],
+  ["تحدي 30 يوم",4,"س"],["أفضل إضافات المتصفح",5,"م"]
+];
+const avColors={"أ":"var(--accent)","س":"var(--purple)","ك":"var(--teal)","م":"var(--orange)"};
+function renderBoard(){
+  const bd=document.getElementById('board');bd.innerHTML='';
+  stages.forEach((st,i)=>{
+    const list=cards.map((c,idx)=>[c,idx]).filter(([c])=>c[1]===i);
+    let html=`<div class="col" data-stage="${i}"><div class="col-h"><span class="dot" style="background:${st[1]}"></span>${st[0]}<span class="cnt">${list.length}</span></div>`;
+    list.forEach(([c,idx])=>{
+      html+=`<div class="card" draggable="true" data-idx="${idx}"><h4>${c[0]}</h4><div class="meta"><span class="pill p-gray">#${idx+1}</span><span class="av" style="background:${avColors[c[2]]}">${c[2]}</span></div></div>`;
+    });
+    html+='</div>';bd.insertAdjacentHTML('beforeend',html);
+  });
+  attachDnD();
+  document.getElementById('bdg-pipe').textContent=cards.filter(c=>c[1]<5).length;
+}
+let dragIdx=null;
+function attachDnD(){
+  document.querySelectorAll('.card').forEach(c=>{
+    c.ondragstart=e=>{dragIdx=+c.dataset.idx;c.classList.add('dragging');};
+    c.ondragend=e=>c.classList.remove('dragging');
+  });
+  document.querySelectorAll('.col').forEach(col=>{
+    col.ondragover=e=>{e.preventDefault();col.classList.add('over');};
+    col.ondragleave=e=>col.classList.remove('over');
+    col.ondrop=e=>{e.preventDefault();col.classList.remove('over');
+      if(dragIdx!==null){const ns=+col.dataset.stage;
+        if(cards[dragIdx][1]!==ns){cards[dragIdx][1]=ns;renderBoard();
+          showToast(`🔔 «${cards[dragIdx][0]}» → ${stages[ns][0]} · تم إخطار المسؤول`);}}
+      dragIdx=null;};
+  });
+}
+
+/* ---------- Script hooks ---------- */
+function copyHook(el){
+  const t=el.querySelector('.txt').textContent;
+  navigator.clipboard?.writeText(t).catch(()=>{});
+  showToast('📋 تم نسخ الخطّاف');
+}
+
+/* ---------- Finance ---------- */
+function animateBars(){
+  document.querySelectorAll('#p-crm .bar').forEach(b=>{setTimeout(()=>b.style.width=b.dataset.w+'%',50);});
+}
+function computeFinance(){
+  const rev=36000+9200+6400, exp=11650;
+  const net=rev-exp, due=12000+6000;
+  document.getElementById('f-rev').textContent=rev.toLocaleString();
+  document.getElementById('f-exp').textContent=exp.toLocaleString();
+  document.getElementById('f-net').textContent=net.toLocaleString();
+  document.getElementById('f-due').textContent=due.toLocaleString();
+}
+
+/* init */
+renderBrain();renderBoard();computeFinance();
+</script>
+</body>
+</html>
